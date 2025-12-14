@@ -8,10 +8,24 @@ import time
 
 app = FastAPI()
 
-# CORS for Frontend (Next.js default port 3000)
+# Configuration
+# Default to localhost for local dev, but allow override via env var
+BASE_URL = os.getenv("BASE_URL", "http://localhost:8000")
+FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
+
+print(f"🔧 Server Config: BASE_URL={BASE_URL}, FRONTEND_URL={FRONTEND_URL}")
+
+# CORS
+origins = [
+    "http://localhost:3000",
+    FRONTEND_URL, 
+    # Add your school server IP/Domain here later if needed, e.g. "http://111.222.33.44:3000"
+    "*" # For development simplicity, allowing all. In production, be more specific.
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -27,11 +41,12 @@ RESULT_DIR = "results"
 os.makedirs(RESULT_DIR, exist_ok=True)
 app.mount("/results", StaticFiles(directory=RESULT_DIR), name="results")
 
-# Mock Products (using local static images)
+# Mock Products
+# Use BASE_URL to generate full image paths
 PRODUCTS = [
-    {"id": "jacket", "name": "Minimal Wool Jacket (Black)", "price": 189000, "image": "http://localhost:8000/static/jacket.png", "category": "Outer"},
-    {"id": "hoodie", "name": "Oversized Hoodie (Gray)", "price": 89000, "image": "http://localhost:8000/static/hoodie.png", "category": "Top"},
-    {"id": "shirt", "name": "Checkered Flannel Shirt (Blue)", "price": 65000, "image": "http://localhost:8000/static/shirt.png", "category": "Top"},
+    {"id": "jacket", "name": "Minimal Wool Jacket (Black)", "price": 189000, "image": f"{BASE_URL}/static/jacket.png", "category": "Outer"},
+    {"id": "hoodie", "name": "Oversized Hoodie (Gray)", "price": 89000, "image": f"{BASE_URL}/static/hoodie.png", "category": "Top"},
+    {"id": "shirt", "name": "Checkered Flannel Shirt (Blue)", "price": 65000, "image": f"{BASE_URL}/static/shirt.png", "category": "Top"},
 ]
 
 @app.get("/api/products")
@@ -94,7 +109,7 @@ async def try_on(
         
         return {
             "success": True, 
-            "result_url": f"http://localhost:8000/results/{output_filename}"
+            "result_url": f"{BASE_URL}/results/{output_filename}"
         }
 
     except Exception as e:
@@ -103,4 +118,5 @@ async def try_on(
 
 if __name__ == "__main__":
     import uvicorn
+    # Use standard 0.0.0.0 to allow external access (important for server)
     uvicorn.run(app, host="0.0.0.0", port=8000)
