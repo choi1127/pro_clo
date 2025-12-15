@@ -127,8 +127,12 @@ async def try_on(
 
         # [3단계] AI 모델 호출 (Gradio Client)
         # HuggingFace의 yisol/IDM-VTON 모델을 사용하여 피팅을 수행합니다.
-        print(f"🚀 AI 모델에 요청 전송 중... (옷: {cloth_path})")
-        client = Client("yisol/IDM-VTON")
+        # os.getenv 대신 직접 토큰을 문자열로 넣습니다.
+        hf_token = os.getenv("HF_TOKEN")
+        print(f"🚀 AI 모델에 요청 전송 중... (토큰 사용 여부: {'O' if hf_token else 'X'})")
+        
+        # hf_token이 있으면 인증된 클라이언트로, 없으면 공용(익명)으로 연결됩니다.
+        client = Client("yisol/IDM-VTON", token=hf_token)
         
         result = client.predict(
             # [입력 1] 사용자 정보 (배경 이미지, 마스크 등)
